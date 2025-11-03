@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>View</title>
+
+    <style>
+        body {
+            margin: 0;
+            box-sizing: border-box;
+            width:  100%;
+            height: 100%;
+        }
+        svg {
+            width:  100px;
+            height: 80px;
+            position: absolute;
+        }
+        #leftEye {
+            top:  100px;
+            left: 100px;
+        }
+        #rightEye {
+            top:  100px;
+            left: 250px;
+        }
+    </style>
+</head>
+<body>
+
+<h1 style="margin-left: 3em;">I see where you go...</h1>
+
+<script>
+
+    const eyeView = id => `
+    <svg id="${id}" viewBox="0 0 120 120">
+
+      <filter id="shadow">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+        <feOffset       dx="0" dy="8" />
+        <feColorMatrix  type="matrix"
+                        values="0 0 0 0  0
+                                0 0 0 0  0
+                                0 0 0 0  0
+                                0 0 0 .5 0"/>
+        <feBlend        in="SourceGraphic" mode="normal"/>
+      </filter>
+
+      <radialGradient id="gradient1" gradientUnits="objectBoundingBox" cx="50%" cy="50%" r="50%">
+        <stop offset= "38%" stop-color="#000000" stop-opacity="1" />
+        <stop offset= "46%" stop-color="#073F80" stop-opacity="1" />
+        <stop offset= "90%" stop-color="#8EC0DD" stop-opacity="1" />
+        <stop offset="100%" stop-color="#2F3A46" stop-opacity="1" />
+      </radialGradient>
+      <g id="${id}_iris">
+        <ellipse cx="60" cy="60" rx="30" ry="30" opacity="1" fill="url(#gradient1)" />
+        <ellipse cx="50" cy="50" rx="7"  ry="7"  opacity="1" fill="#FFFFFF" fill-opacity="0.8"/>
+      </g>
+
+      <!-- Oberlid: wird per SMIL gemorpht -->
+      <path id="${id}_lidUpper"
+            d="M0 60 A60,60 0 0,1 120,60 A60,30 0 0,0 0,60 Z"
+            fill="#FDDC99" filter="url(#shadow)">
+        <!-- schliessen -->
+        <animate id="${id}_lidClose"
+                 attributeName="d"
+                 dur="0.18s"
+                 fill="freeze"
+                 begin="indefinite"
+                 to="M0 60 A60,60 0 0,1 120,60 A60,40 0 0,1 0,60 Z" />
+        <!-- oeffnen -->
+        <animate id="${id}_lidOpen"
+                 attributeName="d"
+                 dur="0.18s"
+                 fill="freeze"
+                 begin="indefinite"
+                 to="M0 60 A60,60 0 0,1 120,60 A60,30 0 0,0 0,60 Z" />
+      </path>
+
+      <!-- Unterlid statisch -->
+      <path d="M0 60 A60,60 0 0,0 120,60 A60,40 0 0,1 0,60 Z"
+            fill="#F4CB76" />
+
+    </svg>
+    `;
+
+    document.writeln(eyeView('leftEye'));
+    document.writeln(eyeView('rightEye'));
+
+    const eyeBinding = eyeId => {
+        const rect = document.querySelectorAll(eyeId + "_iris ellipse")[0].getBoundingClientRect();
+        const iris = document.querySelector(eyeId + "_iris");
+
+        const lidClose = document.querySelector(eyeId + "_lidClose");
+        const lidOpen  = document.querySelector(eyeId + "_lidOpen");
+
+        let closed = false;
+
+        // automatisches Blinzeln
+        setInterval(() => {
+            if (closed) return;
+            lidClose.beginElement();
+            closed = true;
+            setTimeout(() => {
+                lidOpen.beginElement();
+                closed = false;
+            }, 180);
+        }, 7 * 1000);
+
+        const xo = rect.x + rect.width / 2;
+        const yo = rect.y + rect.height / 2;
+
+        // Klick: zu/auf mit Morph
+        document.querySelector(eyeId).onclick = () => {
+            if (closed) {
+                lidOpen.beginElement();
+            } else {
+                lidClose.beginElement();
+            }
+            closed = !closed;
+        };
+
+        // Pupillenbewegung
+        return evt => {
+            const xm = evt.clientX - xo; // the normalized x/y coords to work with
+            const ym = evt.clientY - yo;
+
+            const xmax = rect.width/1.5;
+            const ymax = rect.height/2;
+
+            const widestFocus = 400; // when x is so far away, the eye is maximal extended
+            const scaledX = xm * (xmax / widestFocus );
+            let   xe = xm > 0
+                        ? Math.min( xmax, scaledX)
+                        : Math.max(-xmax, scaledX);
+            const scaledY = ym * (ymax / widestFocus );
+            let   ye = ym > 0
+                        ? Math.min( ymax, scaledY)
+                        : Math.max(-ymax, scaledY);
+            if (xe*xe + ye*ye > xmax * ymax) {
+                xe *= 0.9;
+                ye *= 0.9;
+            }
+            iris.style.transform = `translateX(${xe}px) translateY(${ye}px)`;
+        }
+    };
+
+    const leftListener  = eyeBinding('#leftEye');
+    const rightListener = eyeBinding('#rightEye');
+
+    document.onmousemove = evt => { // highlander pattern
+        leftListener(evt);
+        rightListener(evt);
+    }
+
+</script>
+
+<div id="out"></div>
+</body>
+</html>
