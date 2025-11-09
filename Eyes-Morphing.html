@@ -113,8 +113,8 @@
             closed = !closed;
         };
 
-        const xo = rect.x + rect.width / 2;
-        const yo = rect.y + rect.height / 2;
+        const xo = rect.x + rect.width / 2;  // x-origin
+        const yo = rect.y + rect.height / 2; // y-origin
 
         return evt => {
             const xm = evt.clientX - xo; // the normalized x/y coords to work with
