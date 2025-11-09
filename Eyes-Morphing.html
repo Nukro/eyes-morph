@@ -44,42 +44,41 @@
                                 0 0 0 .5 0"/>
         <feBlend        in="SourceGraphic" mode="normal"/>
       </filter>
-
       <radialGradient id="gradient1" gradientUnits="objectBoundingBox" cx="50%" cy="50%" r="50%">
         <stop offset= "38%" stop-color="#000000" stop-opacity="1" />
         <stop offset= "46%" stop-color="#073F80" stop-opacity="1" />
         <stop offset= "90%" stop-color="#8EC0DD" stop-opacity="1" />
         <stop offset="100%" stop-color="#2F3A46" stop-opacity="1" />
       </radialGradient>
-      <g id="${id}_iris">
-        <ellipse cx="60" cy="60" rx="30" ry="30" opacity="1" fill="url(#gradient1)" />
-        <ellipse cx="50" cy="50" rx="7"  ry="7"  opacity="1" fill="#FFFFFF" fill-opacity="0.8"/>
+      <clipPath id="eyeClip">
+        <ellipse cx="60" cy="60" rx="60" ry="60" />
+      </clipPath>
+
+      <g clip-path="url(#eyeClip)">
+          <g id="${id}_iris">
+            <ellipse cx="60" cy="60" rx="30" ry="30" opacity="1" fill="url(#gradient1)" />
+            <ellipse cx="50" cy="50" rx="7"  ry="7"  opacity="1" fill="#FFFFFF" fill-opacity="0.8"/>
+          </g>
+          <g id="${id}_lidUpper">
+              <path d="M0 60 A60,60 0 0,1 120,60 A60,30 0 0,0 0,60 Z" fill="#FDDC99" filter="url(#shadow)">
+                <animate id="${id}_lidOpen"
+                         attributeName="d"
+                         dur="0.25s"
+                         fill="freeze"
+                         begin="indefinite"
+                         to="M0 60 A60,60 0 0,1 120,60 A60,30 0 0,0 0,60 Z" />
+                <animate id="${id}_lidClose"
+                         attributeName="d"
+                         dur="0.25s"
+                         fill="freeze"
+                         begin="indefinite"
+                         to="M0 60 A60,60 0 0,1 120,60 A60,40 0 0,1 0,60 Z" />
+              </path>
+          </g>
+          <g id="${id}_lidLower">
+              <path d="M0 60 A60,60 0 0,0 120,60 A60,40 0 0,1 0,60 Z" fill="#F4CB76" />
+          </g>
       </g>
-
-      <!-- Oberlid: wird per SMIL gemorpht -->
-      <path id="${id}_lidUpper"
-            d="M0 60 A60,60 0 0,1 120,60 A60,30 0 0,0 0,60 Z"
-            fill="#FDDC99" filter="url(#shadow)">
-        <!-- schliessen -->
-        <animate id="${id}_lidClose"
-                 attributeName="d"
-                 dur="0.18s"
-                 fill="freeze"
-                 begin="indefinite"
-                 to="M0 60 A60,60 0 0,1 120,60 A60,40 0 0,1 0,60 Z" />
-        <!-- oeffnen -->
-        <animate id="${id}_lidOpen"
-                 attributeName="d"
-                 dur="0.18s"
-                 fill="freeze"
-                 begin="indefinite"
-                 to="M0 60 A60,60 0 0,1 120,60 A60,30 0 0,0 0,60 Z" />
-      </path>
-
-      <!-- Unterlid statisch -->
-      <path d="M0 60 A60,60 0 0,0 120,60 A60,40 0 0,1 0,60 Z"
-            fill="#F4CB76" />
-
     </svg>
     `;
 
@@ -90,12 +89,11 @@
         const rect = document.querySelectorAll(eyeId + "_iris ellipse")[0].getBoundingClientRect();
         const iris = document.querySelector(eyeId + "_iris");
 
-        const lidClose = document.querySelector(eyeId + "_lidClose");
         const lidOpen  = document.querySelector(eyeId + "_lidOpen");
+        const lidClose = document.querySelector(eyeId + "_lidClose");
 
         let closed = false;
 
-        // automatisches Blinzeln
         setInterval(() => {
             if (closed) return;
             lidClose.beginElement();
@@ -106,10 +104,6 @@
             }, 180);
         }, 7 * 1000);
 
-        const xo = rect.x + rect.width / 2;
-        const yo = rect.y + rect.height / 2;
-
-        // Klick: zu/auf mit Morph
         document.querySelector(eyeId).onclick = () => {
             if (closed) {
                 lidOpen.beginElement();
@@ -119,7 +113,9 @@
             closed = !closed;
         };
 
-        // Pupillenbewegung
+        const xo = rect.x + rect.width / 2;
+        const yo = rect.y + rect.height / 2;
+
         return evt => {
             const xm = evt.clientX - xo; // the normalized x/y coords to work with
             const ym = evt.clientY - yo;
